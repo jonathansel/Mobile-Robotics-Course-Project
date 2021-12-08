@@ -1,0 +1,52 @@
+<launch>
+  
+   <node pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" name="depthimage_to_laserscan">
+    <remap from="image"     to="/camera/aligned_depth_to_color/image_raw"/>
+    <remap from="camera_info" to="/camera/depth/camera_info"/>
+    <remap from="scan" to="/scan"/>
+    <param name="range_max" type="double" value="2.5"/>
+   </node>
+   
+  <include file="$(find turtlebot_navigation)/launch/includes/move_base.launch.xml"/>
+
+  <!--arg name="navigation"   default="true"/-->
+  <arg name="localization" default="false"/>
+  
+  <!--- Run rtabmap -->
+  <remap from="/rtabmap/grid_map" to="/map"/>
+  <!--remap from="move_base" to="/move_base"/-->
+  <include file="$(find rtabmap_ros)/launch/rtabmap.launch">
+  
+    <arg     if="$(arg localization)" name="args" value="" />
+    <arg unless="$(arg localization)" name="args" value="--delete_db_on_start --Reg/Force3DoF true --Reg/Strategy 0 --proj_max_height 1.0 --Grid/RangeMax 2 --Grid/MaxObstacleHeight 0.5" /> 
+
+    <arg name="localization"    value="$(arg localization)" />
+    
+    <arg name="visual_odometry" value="false"/>
+    <arg name="compressed"      value="false"/>
+    <arg name="frame_id"        value="base_footprint"/>
+    <arg name="rtabmapviz"      value="false"/>
+    <arg name="rviz"            value="false"/>
+    <arg name="odom_frame_id"   value="odom"/>
+
+    <!-- 2D LiDAR make this true? -->
+    <arg name="subscribe_scan"  value="false" />
+    <arg name="scan_topic"      value="/scan"/>
+
+    <!-- If camera is used -->
+    <!--arg name="depth"             value="$(eval camera and not depth_from_lidar)" />
+    <arg name="subscribe_rgb"     value="$(eval camera)" /-->
+
+    <arg name="rgb_topic"         value="/camera/color/image_raw" />
+    <arg name="camera_info_topic" value="/camera/color/camera_info" />
+    <arg name="depth_topic"       value="/camera/aligned_depth_to_color/image_raw" />
+    <arg name="approx_sync"       value="true" />
+    <arg name="approx_rgbd_sync"  value="false" />
+  </include>
+
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find turtlebot_navigation)/config/rtabmap.rviz"/>
+  <!--- Run Move Base -->
+  <!--include if="$(arg navigation)" file="$(find husky_navigation)/launch/move_base.launch" /-->
+
+</launch>
